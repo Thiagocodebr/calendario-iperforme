@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Calendário de Treino | Academia</title>
+  <style>
+    :root {
+      --bg: #0a0a0a;          /* fundo preto elegante */
+      --panel: #111;          /* painéis */
+      --text: #eaeaea;        /* texto principal */
+      --muted: #a8a8a8;       /* texto secundário */
+      --gold: #d4af37;        /* dourado */
+      --silver: #c0c0c0;      /* prata */
+      --accent: #ffffff22;    /* bordas sutis */
+      --ok: #2ecc71;
+      --warn: #f1c40f;
+      --danger: #e74c3c;
+      --radius: 16px;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 500 16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      letter-spacing: .2px;
+    }
+
+    header {
+      position: sticky; top: 0; z-index: 10;
+      background: linear-gradient(180deg, #000 0%, rgba(0,0,0,.65) 100%);
+      border-bottom: 1px solid var(--accent);
+      padding: 18px clamp(16px, 4vw, 32px);
+      display: flex; align-items: center; gap: 16px; justify-content: space-between;
+    }
+    .brand {
+      display: flex; align-items: center; gap: 14px;
+    }
+    .logo {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: conic-gradient(from 210deg, var(--gold), var(--silver), var(--gold));
+      box-shadow: inset 0 0 10px #0009, 0 0 0 2px #000, 0 0 35px rgba(212,175,55,.35);
+    }
+    h1 { margin: 0; font-size: clamp(20px, 2.6vw, 30px); letter-spacing: 1px; }
+    h1 .accent { 
+      background: linear-gradient(90deg, var(--gold), var(--silver));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+
+    .container {
+      padding: 24px clamp(16px, 4vw, 32px) 48px;
+      display: grid; gap: 24px;
+      grid-template-columns: 1.2fr .8fr;
+    }
+    @media (max-width: 1024px){ .container{ grid-template-columns: 1fr; } }
+
+    .card { background: var(--panel); border: 1px solid var(--accent); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .card h2 { margin: 0 0 16px; font-size: 20px; }
+    .card .head { padding: 18px; border-bottom: 1px solid var(--accent); display: flex; align-items: center; gap: 12px; justify-content: space-between; }
+    .card .body { padding: 18px; }
+
+    /* Calendário */
+    .calendar-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+    .calendar-controls select, .calendar-controls button { 
+      background: #0f0f0f; color: var(--text); border: 1px solid var(--accent);
+      padding: 10px 12px; border-radius: 10px; cursor: pointer; transition: .2s;
+    }
+    .calendar-controls button:hover { filter: brightness(1.15); }
+
+    .grid {
+     
+    }
+    { .grid { grid-template-columns: repeat(7,1fr); } }
+
+    .day {
+      background: #0e0e0e; border: 1px solid var(--accent); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; min-height: 170px;
+    }
+    .day header { background: linear-gradient(90deg, #0c0c0c, #0b0b0b); border-bottom: 1px solid var(--accent); padding: 10px 12px; display: flex; align-items: center; justify-content: space-between; position: relative; top: 0; }
+    .day header h3 { margin: 0; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; }
+    .day .content { padding: 12px; display: grid; gap: 8px; flex: 1; }
+
+    .chip { font-size: 12px; padding: 6px 8px; border-radius: 999px; border: 1px solid var(--accent); background: #121212; color: var(--text); display: inline-flex; align-items: center; gap: 8px; }
+    .chip .rm { font-weight: 700; background: linear-gradient(90deg, var(--gold), var(--silver)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+    .ex-input { width: 100%; min-height: 70px; padding: 10px; border-radius: 12px; border: 1px dashed var(--accent); background: #0c0c0c; color: var(--text); resize: vertical; }
+
+    .day footer { padding: 10px 12px; border-top: 1px solid var(--accent); display: flex; gap: 8px; }
+    .btn-small { font-size: 12px; padding: 8px 10px; background: #0f0f0f; border: 1px solid var(--accent); color: var(--text); border-radius: 10px; cursor: pointer; }
+
+    /* Calculadora */
+    .calc {
+      max-width: 380px; margin: 8px auto 0; border-radius: 20px; overflow: hidden; border: 1px solid #ffffff1f;
+      background: linear-gradient(145deg, #0b0b0b 0%, #121212 100%);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 20px 60px rgba(0,0,0,.45);
+    }
+    .calc-display { padding: 18px; font-size: 28px; text-align: right; border-bottom: 1px solid #ffffff1f; min-height: 70px; display: flex; align-items: center; justify-content: flex-end; letter-spacing: .5px; }
+    .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); }
+    .key {
+      padding: 18px; font-size: 18px; border: 1px solid #ffffff12; cursor: pointer;
+      background: linear-gradient(160deg, rgba(255,255,255,.04), rgba(0,0,0,.3));
+      transition: transform .03s ease, filter .2s ease;
+      user-select: none; text-align: center;
+    }
+    .key:active { transform: translateY(1px); filter: brightness(1.08); }
+    .key.op { background: linear-gradient(90deg, var(--gold), var(--silver)); color: #111; font-weight: 800; }
+    .key.equals { grid-column: span 2; background: linear-gradient(90deg, var(--silver), var(--gold)); color: #111; font-weight: 900; }
+    .key.zero { grid-column: span 2; }
+
+    /* Player de Áudio */
+    .audio {
+      display: grid; gap: 12px; border: 1px solid var(--accent); padding: 14px; border-radius: 14px; background: #0f0f0f;
+    }
+    .audio .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .audio input[type="file"], .audio input[type="range"], .audio button, .audio input[type="text"] {
+      background: #0b0b0b; color: var(--text); border: 1px solid var(--accent); border-radius: 10px; padding: 8px 10px;
+    }
+    .audio button { cursor: pointer; }
+
+    /* Glossário */
+    .gloss { display: grid; gap: 8px; }
+    details { background: #0f0f0f; border: 1px solid var(--accent); border-radius: 12px; padding: 10px 12px; }
+    summary { cursor: pointer; color: var(--muted); }
+    details[open] summary { color: var(--text); }
+
+    /* Rodapé */
+    footer.site { margin-top: 24px; color: var(--muted); font-size: 13px; text-align: center; }
+  </style>
+</head>
+<body>
+  <header aria-label="Topo do site">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <h1><span class="accent">Calendário de Treino</span> · Academia</h1>
+    </div>
+    <div class="calendar-controls">
+      <select id="presetSelect" title="Modelos de treino">
+        <option value="">Modelo rápido…</option>
+        <option value="AB">Divisão AB (Força / Hipertrofia)</option>
+        <option value="ABC">Divisão ABC (Peito/Costas/Pernas)</option>
+        <option value="FULL">Full Body 3x</option>
+      </select>
+      <button id="applyPreset">Aplicar</button>
+      <button id="savePlan" title="Salva no navegador">Salvar</button>
+      <button id="clearPlan">Limpar</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Calendário -->
+    <section class="card" aria-labelledby="calTitle">
+      <div class="head"><h2 id="calTitle">Seu calendário semanal</h2></div>
+      <div class="body">
+        <div class="grid" id="calendarGrid" aria-live="polite"></div>
+        <footer class="site">Dica: clique em cada dia e escreva séries, repetições, carga e observações. Suas edições ficam salvas localmente.</footer>
+      </div>
+    </section>
+
+    <!-- Lateral direita: calculadora, áudio e glossário -->
+    <aside class="card" aria-labelledby="toolsTitle">
+      <div class="head"><h2 id="toolsTitle">Ferramentas</h2></div>
+      <div class="body">
+        <!-- Calculadora -->
+        <h3 style="margin:0 0 10px;">Calculadora</h3>
+        <div class="calc" role="group" aria-label="Calculadora">
+          <div class="calc-display" id="display">0</div>
+          <div class="calc-grid">
+            <div class="key" data-act="clear">AC</div>
+            <div class="key" data-act="sign">±</div>
+            <div class="key" data-act="percent">%</div>
+            <div class="key op" data-val="/">÷</div>
+
+            <div class="key" data-val="7">7</div>
+            <div class="key" data-val="8">8</div>
+            <div class="key" data-val="9">9</div>
+            <div class="key op" data-val="*">×</div>
+
+            <div class="key" data-val="4">4</div>
+            <div class="key" data-val="5">5</div>
+            <div class="key" data-val="6">6</div>
+            <div class="key op" data-val="-">−</div>
+
+            <div class="key" data-val="1">1</div>
+            <div class="key" data-val="2">2</div>
+            <div class="key" data-val="3">3</div>
+            <div class="key op" data-val="+">+</div>
+
+            <div class="key zero" data-val="0">0</div>
+            <div class="key" data-val="," data-dec=",">,</div>
+            <div class="key equals" data-act="equals">=</div>
+          </div>
+        </div>
+
+        <!-- Player de áudio -->
+        <h3 style="margin:22px 0 10px;">Som para treino</h3>
+        <div class="audio" aria-label="Player de áudio para treino">
+          <div class="row">
+            <input type="file" id="audioFile" accept="audio/*" title="Carregar arquivo de áudio" />
+            <input type="text" id="audioUrl" placeholder="ou cole uma URL de áudio…" />
+            <button id="loadAudio">Carregar</button>
+          </div>
+          <audio id="player" controls preload="none" style="width:100%"></audio>
+          <div class="row">
+            <button id="play">▶️ Play</button>
+            <button id="pause">⏸️ Pausar</button>
+            <label style="display:flex;align-items:center;gap:8px;">
+              Volume <input type="range" id="volume" min="0" max="1" step="0.01" value="1" />
+            </label>
+            <button id="loop">🔁 Loop</button>
+          </div>
+        </div>
+
+        <!-- Glossário rápido de termos da academia -->
+        <h3 style="margin:22px 0 10px;">Glossário rápido</h3>
+        <div class="gloss">
+          <details><summary>RM (Repetição Máxima)</summary><p>Número máximo de repetições com certa carga. Ex.: 8RM = carga que permite 8 repetições até a falha.</p></details>
+          <details><summary>Falha concêntrica</summary><p>Ponto em que não é mais possível levantar a carga com boa técnica na fase de subida do movimento.</p></details>
+          <details><summary>Cadência 3-1-1</summary><p>Tempo de execução: 3s descendo, 1s de pausa, 1s subindo.</p></details>
+          <details><summary>Drop set</summary><p>Após a falha, reduzir a carga e continuar sem descanso, aumentando o estresse metabólico.</p></details>
+          <details><summary>Bi-set / Super-set</summary><p>Duas séries seguidas de exercícios diferentes, com pouco ou nenhum descanso (ex.: bíceps + tríceps).</p></details>
+          <details><summary>Aquecimento específico</summary><p>De 1 a 3 séries leves do próprio exercício antes das séries efetivas, para preparar articulações e sistema nervoso.</p></details>
+          <details><summary>Amplitude completa</summary><p>Executar o movimento em toda a faixa segura de movimento, sem roubo e com controle.</p></details>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="site">Feito com HTML5, CSS e JavaScript. Suporta salvamento local (localStorage) e carregamento de áudio local/URL.</footer>
+
+  <script>
+    // ==========================
+    // Calendário de Treino
+    // ==========================
+    const weekDays = [
+      'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'
+    ];
+
+    const presets = {
+      AB: {
+        'Segunda': 'A (Força) — Supino reto 5x5 | Remada curvada 5x5 | Agachamento livre 5x5\nAcessórios: Desenvolvimento 3x8, Rosca direta 3x10\nNotas: Cadência 2-0-2, 90" descanso',
+        'Terça': 'Cardio leve 30–40min + Mobilidade',
+        'Quarta': 'B (Hipertrofia) — Supino inclinado 4x10 | Puxada aberta 4x10 | Leg press 4x12\nAcessórios: Tríceps testa 3x12, Elevação lateral 3x15',
+        'Quinta': 'Descanso ativo | Core 15min',
+        'Sexta': 'A (Força) — Terra 5x3 | Barra fixa 5xAMRAP | Levantamento terra romeno 4x6',
+        'Sábado': 'HIIT 12–16min (1:1) + Mobilidade',
+        'Domingo': 'Off / Caminhada 30min'
+      },
+      ABC: {
+        'Segunda': 'Peito/Tríceps — Supino reto 4x8 | Supino inclinado 3x10 | Crucifixo 3x12 | Tríceps corda 3x12\nBi-set: Flexão + Tríceps banco (2 rounds)',
+        'Terça': 'Costas/Bíceps — Puxada aberta 4x8 | Remada baixa 4x10 | Pulldown 3x12 | Rosca direta 3x10',
+        'Quarta': 'Pernas/Glúteos — Agachamento 4x8 | Leg press 4x12 | Stiff 3x10 | Panturrilha 4x15',
+        'Quinta': 'Ombros — Desenvolvimento 4x8 | Elevação lateral 4x12 | Posterior ombro 3x15',
+        'Sexta': 'Core + Cardio 25–35min',
+        'Sábado': 'HIIT + Mobilidade',
+        'Domingo': 'Off'
+      },
+      FULL: {
+        'Segunda': 'Full Body — Agacho 3x5 | Supino 3x5 | Remada 3x5 | Core 10min',
+        'Quarta': 'Full Body — Terra 3x5 | Desenvolvimento 3x5 | Barra fixa 3xAMRAP | Core 10min',
+        'Sexta': 'Full Body — Agacho 3x5 | Supino incl. 3x8 | Remada halter 3x8 | Cardio 20min',
+      }
+    };
+
+    const grid = document.getElementById('calendarGrid');
+
+    function renderCalendar(){
+      grid.innerHTML = '';
+      weekDays.forEach(day => {
+        const card = document.createElement('div');
+        card.className = 'day';
+        card.innerHTML = `
+          <header><h3>${day}</h3><span class="chip"><span class="rm">RM</span>&nbsp;cadência & bull; descanso</span></header>
+          <div class="content">
+            <textarea class="ex-input" placeholder="Ex.: Supino reto 4x10 (cadência 3-1-1) — descanso 60–90s. Adicione aquecimento específico." data-day="${day}"></textarea>
+          </div>
+          <footer>
+            <button class="btn-small" data-fill="${day}">Adicionar exemplo</button>
+            <button class="btn-small" data-clear="${day}">Limpar</button>
+          </footer>
+        `;
+        grid.appendChild(card);
+      });
+      restoreFromStorage();
+    }
+
+    function fillExample(day){
+      const examples = {
+        base: 'Agachamento livre 4x8 | Leg press 3x12 | Stiff 3x10 | Panturrilha 4x15\nNotas: Amplitude completa, cadência 2-0-2, descanso 60–90s. Finalize com drop set no último exercício.'
+      };
+      const area = document.querySelector(`.ex-input[data-day="${day}"]`);
+      if (area) { area.value = examples.base; saveToStorage(); }
+    }
+
+    function clearDay(day){
+      const area = document.querySelector(`.ex-input[data-day="${day}"]`);
+      if (area) { area.value = ''; saveToStorage(); }
+    }
+
+    function applyPreset(key){
+      const preset = presets[key];
+      if (!preset) return;
+      document.querySelectorAll('.ex-input').forEach(t => t.value = '');
+      Object.entries(preset).forEach(([day, text]) => {
+        const area = document.querySelector(`.ex-input[data-day="${day}"]`);
+        if (area) area.value = text;
+      });
+      saveToStorage();
+    }
+
+    function saveToStorage(){
+      const data = {};
+      document.querySelectorAll('.ex-input').forEach(area => data[area.dataset.day] = area.value);
+      localStorage.setItem('treino_calendar_v1', JSON.stringify(data));
+    }
+
+    function restoreFromStorage(){
+      const raw = localStorage.getItem('treino_calendar_v1');
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      Object.entries(data).forEach(([day, text]) => {
+        const area = document.querySelector(`.ex-input[data-day="${day}"]`);
+        if (area) area.value = text;
+      });
+    }
+
+    // Eventos do calendário
+    renderCalendar();
+    grid.addEventListener('input', (e) => { if (e.target.classList.contains('ex-input')) saveToStorage(); });
+    grid.addEventListener('click', (e) => {
+      const fillBtn = e.target.closest('[data-fill]');
+      const clrBtn  = e.target.closest('[data-clear]');
+      if (fillBtn) fillExample(fillBtn.dataset.fill);
+      if (clrBtn) clearDay(clrBtn.dataset.clear);
+    });
+    document.getElementById('applyPreset').addEventListener('click', () => {
+      const sel = document.getElementById('presetSelect');
+      applyPreset(sel.value);
+    });
+    document.getElementById('savePlan').addEventListener('click', saveToStorage);
+    document.getElementById('clearPlan').addEventListener('click', () => {
+      if (confirm('Limpar toda a semana?')) {
+        document.querySelectorAll('.ex-input').forEach(t => t.value = '');
+        saveToStorage();
+      }
+    });
+
+    // ==========================
+    // Calculadora (padrão)
+    // ==========================
+    const display = document.getElementById('display');
+    let current = '0', operator = null, operand = null, justEvaluated = false;
+
+    function updateDisplay(){ display.textContent = current.replace('.', ','); }
+
+    function inputDigit(d){
+      if (justEvaluated) { current = '0'; justEvaluated = false; }
+      if (current.length > 16) return;
+      if (current === '0' && d !== ',') current = '';
+      if (d === ',') {
+        if (current.includes('.')) return;
+        current += '.';
+      } else {
+        current += d;
+      }
+      if (current === '') current = '0';
+      updateDisplay();
+    }
+
+    function setOperator(op){
+      if (operator && !justEvaluated) evaluate();
+      operand = parseFloat(current);
+      operator = op; justEvaluated = false; current = '0'; updateDisplay();
+    }
+
+    function clearAll(){ current = '0'; operator = null; operand = null; justEvaluated = false; updateDisplay(); }
+    function toggleSign(){ if (current === '0') return; current = String(-parseFloat(current)); updateDisplay(); }
+    function percent(){ current = String(parseFloat(current) / 100); updateDisplay(); }
+
+    function evaluate(){
+      const a = operand; const b = parseFloat(current);
+      if (a == null || operator == null) return;
+      let r = 0;
+      switch(operator){
+        case '+': r = a + b; break;
+        case '-': r = a - b; break;
+        case '*': r = a * b; break;
+        case '/': r = b === 0 ? NaN : a / b; break;
+      }
+      current = String(r);
+      operator = null; operand = null; justEvaluated = true; updateDisplay();
+    }
+
+    document.querySelectorAll('.key').forEach(k => {
+      k.addEventListener('click', () => {
+        const val = k.dataset.val; const act = k.dataset.act;
+        if (val) {
+          if (['+', '-', '*', '/'].includes(val)) setOperator(val); else inputDigit(val);
+        } else if (act) {
+          if (act === 'clear') clearAll();
+          if (act === 'sign') toggleSign();
+          if (act === 'percent') percent();
+          if (act === 'equals') evaluate();
+        }
+      });
+    });
+
+    // Teclado físico
+    window.addEventListener('keydown', (e) => {
+      const key = e.key;
+      if (/^[0-9]$/.test(key)) inputDigit(key);
+      if (key === '.') inputDigit(',');
+      if (['+', '-', '*', '/'].includes(key)) setOperator(key);
+      if (key === 'Enter' || key === '=') { e.preventDefault(); evaluate(); }
+      if (key === 'Escape') clearAll();
+      if (key === '%') percent();
+    });
+
+    // ==========================
+    // Player de Áudio
+    // ==========================
+    const fileInput = document.getElementById('audioFile');
+    const urlInput  = document.getElementById('audioUrl');
+    const loadBtn   = document.getElementById('loadAudio');
+    const player    = document.getElementById('player');
+    const playBtn   = document.getElementById('play');
+    const pauseBtn  = document.getElementById('pause');
+    const volume    = document.getElementById('volume');
+    const loopBtn   = document.getElementById('loop');
+
+    function loadFromFile(){
+      const f = fileInput.files?.[0];
+      if (!f) return;
+      const url = URL.createObjectURL(f);
+      player.src = url; player.play();
+    }
+    function loadFromUrl(){
+      if (!urlInput.value) return;
+      player.src = urlInput.value; player.play();
+    }
+
+    fileInput.addEventListener('change', loadFromFile);
+    loadBtn.addEventListener('click', loadFromUrl);
+    playBtn.addEventListener('click', () => player.play());
+    pauseBtn.addEventListener('click', () => player.pause());
+    volume.addEventListener('input', () => player.volume = parseFloat(volume.value));
+    loopBtn.addEventListener('click', () => { player.loop = !player.loop; loopBtn.textContent = player.loop ? '🔁 Loop ON' : '🔁 Loop'; });
+  </script>
+</body>
+</html>
